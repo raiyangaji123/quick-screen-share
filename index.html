@@ -3,40 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Broadcaster</title>
+    <title>Broadcaster</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
     <h1 class="text-2xl font-bold mb-4">Broadcaster</h1>
-    <div id="status" class="text-yellow-500 mb-6 font-medium">Connecting to server...</div>
+    <div id="status" class="text-yellow-500 mb-6 font-medium">Initializing...</div>
+    
+    <button id="startBtn" class="hidden bg-green-600 px-8 py-4 rounded-xl text-white font-bold text-xl mb-6 shadow-lg">
+        TAP TO START SHARING
+    </button>
+
     <div id="qrcode" class="bg-white p-2 rounded-xl mb-6"></div>
     <p id="peerId" class="text-slate-400 text-sm"></p>
 
     <script>
         const peer = new Peer();
         const status = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        let myStream = null;
 
         peer.on('open', (id) => {
-            status.innerText = "Ready! Scan code with viewer phone.";
-            status.className = "text-green-500 mb-6 font-bold";
+            status.innerText = "Ready! Tap the button below.";
+            status.className = "text-blue-400 mb-6 font-bold";
             document.getElementById('peerId').innerText = "Session ID: " + id;
             
-            // Automatically generates the correct URL for your GitHub Pages
             const baseUrl = window.location.href.split('/').slice(0, -1).join('/');
             const receiverUrl = baseUrl + "/receive.html?id=" + id;
-            
             new QRCode(document.getElementById("qrcode"), receiverUrl);
+            
+            startBtn.classList.remove('hidden');
         });
 
-        peer.on('call', async (call) => {
+        startBtn.addEventListener('click', async () => {
             try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({video: true});
-                call.answer(stream);
-                status.innerText = "Sharing Screen Live!";
+                // Now, getDisplayMedia is called directly from a click!
+                myStream = await navigator.mediaDevices.getDisplayMedia({video: true});
+                startBtn.innerText = "Sharing Live!";
+                startBtn.className = "bg-red-600 px-8 py-4 rounded-xl text-white font-bold text-xl mb-6";
+                status.innerText = "Connected! Waiting for viewer...";
             } catch (err) {
                 status.innerText = "Error: " + err.message;
+            }
+        });
+
+        peer.on('call', (call) => {
+            if (myStream) {
+                call.answer(myStream);
+                status.innerText = "Sharing with viewer!";
+            } else {
+                alert("Please tap 'START SHARING' before the viewer connects.");
             }
         });
     </script>
