@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Broadcaster</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+    <h1 class="text-2xl font-bold mb-4">Broadcaster</h1>
+    <div id="status" class="text-yellow-500 mb-6 font-medium">Connecting to server...</div>
+    <div id="qrcode" class="bg-white p-2 rounded-xl mb-6"></div>
+    <p id="peerId" class="text-slate-400 text-sm"></p>
+
+    <script>
+        const peer = new Peer();
+        const status = document.getElementById('status');
+
+        peer.on('open', (id) => {
+            status.innerText = "Ready! Scan code with viewer phone.";
+            status.className = "text-green-500 mb-6 font-bold";
+            document.getElementById('peerId').innerText = "Session ID: " + id;
+            
+            // Automatically generates the correct URL for your GitHub Pages
+            const baseUrl = window.location.href.split('/').slice(0, -1).join('/');
+            const receiverUrl = baseUrl + "/receive.html?id=" + id;
+            
+            new QRCode(document.getElementById("qrcode"), receiverUrl);
+        });
+
+        peer.on('call', async (call) => {
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({video: true});
+                call.answer(stream);
+                status.innerText = "Sharing Screen Live!";
+            } catch (err) {
+                status.innerText = "Error: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>

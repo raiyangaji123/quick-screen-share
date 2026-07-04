@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Viewer</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black min-h-screen flex flex-col items-center justify-center">
+    
+    <button id="connectBtn" class="bg-blue-600 px-8 py-4 rounded-xl text-white font-bold text-xl hover:bg-blue-500">
+        TAP TO VIEW SCREEN
+    </button>
+    
+    <video id="remoteVideo" autoplay playsinline class="w-full h-auto hidden"></video>
+
+    <script>
+        const btn = document.getElementById('connectBtn');
+        const video = document.getElementById('remoteVideo');
+        
+        btn.addEventListener('click', () => {
+            const params = new URLSearchParams(window.location.search);
+            const peerId = params.get('id');
+            const peer = new Peer();
+
+            peer.on('open', () => {
+                btn.innerText = "Connecting...";
+                const call = peer.call(peerId, new MediaStream());
+                
+                call.on('stream', (stream) => {
+                    btn.classList.add('hidden');
+                    video.classList.remove('hidden');
+                    video.srcObject = stream;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
